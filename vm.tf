@@ -1,3 +1,15 @@
+resource "azurerm_public_ip" "vm_pip" {
+  name                = "${local.name_prefix}-${local.region_short}-${local.environment}-vm-pip"
+  resource_group_name = data.azurerm_resource_group.resource_group.name
+  location            = data.azurerm_resource_group.resource_group.location
+  allocation_method   = "Static"
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
+
+}
+
 resource "azurerm_network_interface" "vm_nic" {
   name                = "${local.name_prefix}-${local.region_short}-${local.environment}-vm-nic"
   resource_group_name = data.azurerm_resource_group.resource_group.name
@@ -7,6 +19,11 @@ resource "azurerm_network_interface" "vm_nic" {
     name                          = "${local.name_prefix}-${local.region_short}-${local.environment}-vm-ipconfig"
     subnet_id                     = azurerm_subnet.compute_snet.id
     private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.vm_pip.id
+  }
+
+  lifecycle {
+    ignore_changes = [tags]
   }
 
 }
@@ -43,6 +60,6 @@ resource "azurerm_virtual_machine" "vm" {
   }
 
   lifecycle {
-    ignore_changes = [tags]
+    ignore_changes = [tags, identity]
   }
 }

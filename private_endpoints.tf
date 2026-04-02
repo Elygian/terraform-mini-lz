@@ -15,3 +15,15 @@ resource "azurerm_private_endpoint" "generic_storage_pe" {
     ignore_changes = [tags]
   }
 }
+
+resource "azurerm_private_dns_a_record" "generic_storage_blob_record" {
+  name                = azurerm_storage_account.generic_storage.name
+  zone_name           = azurerm_private_dns_zone.private_dns_zone.name
+  resource_group_name = data.azurerm_resource_group.resource_group.name
+  ttl                 = 300
+  records             = [azurerm_private_endpoint.generic_storage_pe.private_service_connection[0].private_ip_address]
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
+}

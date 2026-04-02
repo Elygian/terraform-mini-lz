@@ -31,7 +31,7 @@ resource "azurerm_subnet" "compute_snet" {
 }
 
 resource "azurerm_private_dns_zone" "private_dns_zone" {
-  name                = "${local.region_long}.privatelink.blob.core.windows.net"
+  name                = "privatelink.blob.core.windows.net"
   resource_group_name = data.azurerm_resource_group.resource_group.name
 
   lifecycle {
@@ -48,4 +48,31 @@ resource "azurerm_private_dns_zone_virtual_network_link" "name" {
   lifecycle {
     ignore_changes = [tags]
   }
+}
+
+resource "azurerm_network_security_group" "compute_nsg" {
+  name                = "${local.name_prefix}-${local.region_short}-${local.environment}-compute-nsg"
+  location            = data.azurerm_resource_group.resource_group.location
+  resource_group_name = data.azurerm_resource_group.resource_group.name
+
+  security_rule {
+    name                       = "AllowPublicIP"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = var.public_ip
+    destination_address_prefix = "*"
+  }
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
+}
+
+resource "azurerm_subnet_network_security_group_association" "compute_nsg_assoc" {
+  subnet_id                 = azurerm_subnet.compute_snet.id
+  network_security_group_id = azurerm_network_security_group.compute_nsg.id
 }
